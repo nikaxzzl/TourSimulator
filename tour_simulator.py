@@ -13,6 +13,17 @@ point_global = 0
 cities_passed = 0
 routes_file = "routes.json"
 
+def get_yes_no_input(prompt):
+    """Запрашивает у пользователя ответ «да»/«нет» с повторением при неверном вводе."""
+    while True:
+        response = input(prompt).strip().lower()
+        if response in ['да', 'yes', 'y', 'д']:
+            return True
+        elif response in ['нет', 'no', 'n', 'н']:
+            return False
+        else:
+            console.print("Пожалуйста, введите да или нет", style="red")
+
 
 def load_routes():
     if os.path.exists(routes_file):
@@ -78,7 +89,6 @@ def one_new_travel():
 
 
 
-
 def choose_city(city):
     global cities_passed
     cities_passed += 1
@@ -92,27 +102,21 @@ def choose_city(city):
         console.print(f"\nОстановка {number}: {stop['name']} ", style="bold  green")
         console.print(stop['description'])
         image_path = stop.get("image_path")
-        
-        response = input("Хотите посмотреть картинку? (да/нет): ").strip().lower()
-        if response in ['да', 'yes', 'y', 'д']:
-            try:
-                from PIL import Image
-                img = Image.open(image_path)
-                img.show()
-                break
-            except Exception as e:
-                    print(f"Не удалось открыть картинку: {e}")
-                    return False
-        elif response in ['нет', 'no', 'n', 'н']:
-                print("Окей")
-                
+        if image_path and os.path.exists(image_path):
+            if get_yes_no_input("Хотите посмотреть картинку? (да/нет): "):
+                try:
+                    img = Image.open(image_path)
+                    img.show()
+                    console.print("Картинка открыта!", style="green")
+                except Exception as e:
+                    console.print(f"[dim]Не удалось открыть картинку: {e}[/dim]", style="red")
+            else:
+                console.print("Окей, переходим дальше.", style="yellow")
         else:
-                print("Пожалуйста, введите 'да' или 'нет'.")
-
-
+            console.print("[dim]Фото отсутствует или файл не найден[/dim]", style="dim")
+        # Викторина, если есть
         if number < len(stops):
-            input("\nНажмите Enter для перехода к следующей остановке...\n\n")
-
+            input("\nНажмите Enter для перехода к следующей остановке...")
 
     for number, stop in enumerate(stops, 1):
         console.print("ВИКТОРИНА", style='bold blue')
