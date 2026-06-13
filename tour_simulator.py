@@ -2,10 +2,13 @@ from fontTools.varLib.plot import stops
 from rich.console import Console
 from art import text2art
 import json
+import time
 import os
 from PIL import Image
 from art import tprint
 from colorama import init, Fore, Back, Style
+from rich.panel import Panel  # Красивые рамки
+from rich.progress import track
 
 init(autoreset=True)
 console = Console(force_terminal=True)
@@ -91,7 +94,15 @@ def one_new_travel():
 
 def choose_city(city):
     global cities_passed
+    
+    console.print(
+        f"[bold yellow]Отправляемся в путь по маршруту: {city['name']}...[/]"
+    )
+    for _ in track(range(20), description="[green]Сборы и дорога...[/]"):
+        time.sleep(0.05)
+    
     cities_passed += 1
+    
     console.print(f"--------------------------------------------------------------------------------\nОтправимся в путешествие в {city['name']}", style="bold blue")
     console.print(city['description'], style="italic")
 
