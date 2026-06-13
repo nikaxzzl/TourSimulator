@@ -7,8 +7,14 @@ import os
 from PIL import Image
 from art import tprint
 from colorama import init, Fore, Back, Style
-from rich.panel import Panel  # Красивые рамки
+from rich.panel import Panel  
 from rich.progress import track
+
+
+from simple_term_menu import TerminalMenu
+
+menu = TerminalMenu(['yes', 'no', 'maybe', 'so'])
+menu.show()
 
 init(autoreset=True)
 console = Console(force_terminal=True)
@@ -20,9 +26,9 @@ def get_yes_no_input(prompt):
     """Запрашивает у пользователя ответ «да»/«нет» с повторением при неверном вводе."""
     while True:
         response = input(prompt).strip().lower()
-        if response in ['да', 'yes', 'y', 'д']:
+        if response in ['да', 'yes']:
             return True
-        elif response in ['нет', 'no', 'n', 'н']:
+        elif response in ['нет', 'no']:
             return False
         else:
             console.print("Пожалуйста, введите да или нет", style="red")
@@ -99,20 +105,26 @@ def choose_city(city):
         f"[bold yellow]Отправляемся в путь по маршруту: {city['name']}...[/]"
     )
     for _ in track(range(20), description="[green]Сборы и дорога...[/]"):
-        time.sleep(0.05)
+        time.sleep(0.10)
     
     cities_passed += 1
     
-    console.print(f"--------------------------------------------------------------------------------\nОтправимся в путешествие в {city['name']}", style="bold blue")
-    console.print(city['description'], style="italic")
-
+    console.print(
+        Panel(
+            f"[bold text #ffffff]{city['description']}[/]",
+            title=f"Добро пожаловать в {city['name']}!",
+            style="bold blue",
+        )
+    )
     stops = city.get('stops', [])
 
 
     for number, stop in enumerate(stops,1):
-        console.print(f"\nОстановка {number}: {stop['name']} ", style="bold  green")
+        console.print(
+            f"\n📍 [bold green]Остановка {number}: {stop['name']}[/]")
         console.print(stop['description'])
         image_path = stop.get("image_path")
+
         if image_path and os.path.exists(image_path):
             if get_yes_no_input("Хотите посмотреть картинку? (да/нет): "):
                 try:
@@ -157,7 +169,7 @@ def show_achievements():
     console.print("🏆 Ваши достижения:", style="bold underline yellow")
     console.print(f"• Настоящий путешественник: {cities_passed}3 тура", style="green")
 
-    console.print(f"• Очки достижений: {point_global}", style="magenta")
+    console.print(f"• Очки достижений: [bold yellow]{point_global}", style="magenta")
     input("\nНажмите Enter, чтобы вернуться в меню...")
     menu()
 
