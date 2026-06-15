@@ -11,19 +11,19 @@ from rich.panel import Panel
 from rich.progress import track
 
 
-from simple_term_menu import TerminalMenu
-
-menu = TerminalMenu(['yes', 'no', 'maybe', 'so'])
-menu.show()
-
 init(autoreset=True)
 console = Console(force_terminal=True)
 point_global = 0    
 cities_passed = 0
 routes_file = "routes.json"
+visited_cities = []
+
+def clear_screen():
+    os.system('cls' if os.name == 'nt' else 'clear')
+
 
 def get_yes_no_input(prompt):
-    """Запрашивает у пользователя ответ «да»/«нет» с повторением при неверном вводе."""
+
     while True:
         response = input(prompt).strip().lower()
         if response in ['да', 'yes']:
@@ -43,9 +43,14 @@ def load_routes():
         return {}
 
 def menu():
-
+    console.print("[bold cyan]")
     tprint("Tour-simulator", font="slant")
-    console.print("Добро пожаловать в «Тур-симулятор»! ", style="bold italic  #E0FFFF on  #5F9EA0")
+    console.print(
+        Panel.fit(
+            "Добро пожаловать в «Тур-симулятор»! ",
+            
+        )
+    )
     console.print("Выберите действие:\n"
                   "1. 🗺️Начать новое путешествие\n"
                   "2. 🏆Достижения и бонусы — получить награды за пройденные туры\n"
@@ -71,7 +76,6 @@ def menu():
 def one_new_travel():
 
     console.print("\n\n\nВыберите город для путешествия:\n", style='bold underline yellow')
-
     routes = load_routes()
     cities = routes.get("cities", [])
 
@@ -79,18 +83,26 @@ def one_new_travel():
         console.print("Маршруты пока не загружены.", style="bold red")
         menu()
         return
+
     for num, city in enumerate(cities, 1):
         console.print(f"{num}. {city['name']} ")
         chet = 0
+
+    for num, city in enumerate(cities, 1):
+        status = (
+            "[green](Пройден ✔)[/]"
+            if city["name"] in visited_cities
+            else "[yellow](Новый ⏳)[/]"
+        )
+        console.print(f"{num}. {city['name']} {status}")
+
     while True:
         try:
             choose = int(input("Введите номер города:\t"))
             if 1 <= choose <= len(cities):
                 opted_city = cities[choose - 1]
                 choose_city(opted_city)
-
                 break
-
             else:
                 console.print("такого города нет в списке.", style="bold red")
         except ValueError:
@@ -99,15 +111,20 @@ def one_new_travel():
 
 
 def choose_city(city):
-    global cities_passed
+    global cities_passed,  point_global, visited_cities
     
+    city_name = city['name']
+    is_already_visited = city_name in visited_cities
+    clear_screen()
+
     console.print(
         f"[bold yellow]Отправляемся в путь по маршруту: {city['name']}...[/]"
     )
     for _ in track(range(20), description="[green]Сборы и дорога...[/]"):
         time.sleep(0.10)
     
-    cities_passed += 1
+    clear_screen()
+    
     
     console.print(
         Panel(
@@ -117,8 +134,6 @@ def choose_city(city):
         )
     )
     stops = city.get('stops', [])
-
-
     for number, stop in enumerate(stops,1):
         console.print(
             f"\n📍 [bold green]Остановка {number}: {stop['name']}[/]")
@@ -137,10 +152,11 @@ def choose_city(city):
                 console.print("Окей, переходим дальше.", style="yellow")
         else:
             console.print("[dim]Фото отсутствует или файл не найден[/dim]", style="dim")
-        # Викторина, если есть
+        
         if number < len(stops):
-            input("\nНажмите Enter для перехода к следующей остановке...")
-
+            input("\nНажмите Enter для перехода к следующей остановке...",)
+            
+        
     for number, stop in enumerate(stops, 1):
         console.print("ВИКТОРИНА", style='bold blue')
         if 'quiz' in stop:
@@ -151,25 +167,37 @@ def choose_city(city):
             update_achievements(10)
         else:
             console.print(f"❌ Неверно. Это {stop['quiz']['answer']}.", style="bold red")
-
+        
     console.print("--------------------------------------------------------------------------------\n\n\n\n Тур завершён! Вы получили бонус: +50 очков достижений!", style="bold green")
-    update_achievements(50)
+
+    if not is_already_visited:
+        cities_passed += 1
+        visited_cities.append(city_name)
+        update_achievements(50)
+        console.print(
+            "🎉 Тур завершён впервые! Вы получили бонус: +50 очков достижений!",
+            style="bold green",
+        )
+    else:
+        console.print(
+            "⏳ Тур завершён! Вы уже проходили его раньше, поэтому новые очки не начислены.",
+            style="yellow",
+        )
+
+    input("\nНажмите Enter, чтобы вернуться в меню...")
     menu()
-
-
 
 def update_achievements(points):
     global point_global
     point_global += points
-    console.print(f"Получено {points} очков достижений! Всего: {point_global}", style="  yellow")
-
 
 def show_achievements():
+    console.print(f"• Настоящий путешественник: [bold green]{cities_passed}[/] пройденных туров", style="white")
+    
+    console.print(Panel("🏆 ВАШИ ДОСТИЖЕНИЯ", style="bold gold3", expand=False))
+    console.print(f"• Настоящий путешественник: [bold green]{cities_passed}[/] пройденных туров", style="white")
 
-    console.print("🏆 Ваши достижения:", style="bold underline yellow")
-    console.print(f"• Настоящий путешественник: {cities_passed}3 тура", style="green")
-
-    console.print(f"• Очки достижений: [bold yellow]{point_global}", style="magenta")
+    console.print(f" Очки достижений: [bold yellow]{point_global}", style="magenta")
     input("\nНажмите Enter, чтобы вернуться в меню...")
     menu()
 
