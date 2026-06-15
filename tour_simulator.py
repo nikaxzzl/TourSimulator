@@ -137,6 +137,7 @@ def choose_city(city):
         engine.say(stop['description'])
         image_path = stop.get("image_path")
         engine.runAndWait()
+        
 
         if image_path and os.path.exists(image_path):
             if get_yes_no_input("Хотите посмотреть картинку? (да/нет): "):
