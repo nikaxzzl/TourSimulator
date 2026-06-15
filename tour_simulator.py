@@ -1,22 +1,20 @@
-from fontTools.varLib.plot import stops
 from rich.console import Console
-from art import text2art
 import json
 import time
 import os
 from PIL import Image
 from art import tprint
-from colorama import init, Fore, Back, Style
 from rich.panel import Panel  
 from rich.progress import track
+import pyttsx3
 
 
-init(autoreset=True)
 console = Console(force_terminal=True)
 point_global = 0    
 cities_passed = 0
 routes_file = "routes.json"
 visited_cities = []
+engine = pyttsx3.init()
 
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -136,7 +134,9 @@ def choose_city(city):
         console.print(
             f"\n📍 [bold green]Остановка {number}: {stop['name']}[/]")
         console.print(stop['description'])
+        engine.say(stop['description'])
         image_path = stop.get("image_path")
+        engine.runAndWait()
 
         if image_path and os.path.exists(image_path):
             if get_yes_no_input("Хотите посмотреть картинку? (да/нет): "):
@@ -190,7 +190,6 @@ def update_achievements(points):
     point_global += points
 
 def show_achievements():
-    console.print(f"• Настоящий путешественник: [bold green]{cities_passed}[/] пройденных туров", style="white")
     
     console.print(Panel("🏆 ВАШИ ДОСТИЖЕНИЯ", style="bold gold3", expand=False))
     console.print(f"• Настоящий путешественник: [bold green]{cities_passed}[/] пройденных туров", style="white")
