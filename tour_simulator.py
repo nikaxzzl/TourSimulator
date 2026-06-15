@@ -83,9 +83,7 @@ def one_new_travel():
         console.print("Маршруты пока не загружены.", style="bold red")
         menu()
         return
-
-    for num, city in enumerate(cities, 1):
-        console.print(f"{num}. {city['name']} ")
+    
         chet = 0
 
     for num, city in enumerate(cities, 1):
