@@ -8,7 +8,6 @@ from rich.panel import Panel
 from rich.progress import track
 import pyttsx3
 
-
 console = Console(force_terminal=True)
 point_global = 0    
 cities_passed = 0
@@ -82,7 +81,6 @@ def one_new_travel():
         menu()
         return
     
-        chet = 0
 
     for num, city in enumerate(cities, 1):
         status = (
@@ -121,7 +119,6 @@ def choose_city(city):
     
     clear_screen()
     
-    
     console.print(
         Panel(
             f"[bold text #ffffff]{city['description']}[/]",
@@ -129,16 +126,34 @@ def choose_city(city):
             style="bold blue",
         )
     )
-    stops = city.get('stops', [])
-    for number, stop in enumerate(stops,1):
-        console.print(
-            f"\n📍 [bold green]Остановка {number}: {stop['name']}[/]")
-        console.print(stop['description'])
-        engine.say(stop['description'])
-        image_path = stop.get("image_path")
-        engine.runAndWait()
-        
+    input("\nГотовы к путешествие?! Нажмите Enter, чтобы перейти к остановке...")
 
+    stops = city.get('stops', [])
+    console.print(f"\n[bold magenta][СИСТЕМА] Python нашёл в файле остановок для этого города: {len(stops)}[/]")
+    time.sleep(2)
+    for number, stop in enumerate(stops, 1):
+        stop_name = stop.get('name', f"Маршрутная точка {number}")
+        stop_description = stop.get('description', stop.get('descripton', stop.get('discription', "Описание этой локации временно недоступно.")))
+
+
+        console.print(f"\n📍 [bold green]Остановка {number}: {stop_name}[/]")
+        console.print(stop_description)
+
+        # Озвучка
+        if get_yes_no_input("Хотите прослушать описание остановки? (да/нет): "):
+            try:
+                text_to_speak = f"Остановка {number}: {stop_name}. {stop_description}"
+                for bad_char in ['—', '–', '«', '»', '°', '\n', '\t', '•', '📍','"',"-"," "]:
+                    text_to_speak = text_to_speak.replace(bad_char, ' ')
+                engine.say(text_to_speak)
+                engine.runAndWait()
+            except Exception as e:
+                console.print(f"[bold red]Ошибка озвучки на остановке {number}: {type(e).__name__}: {e}[/]", style="red")
+        else:
+            console.print("Окей, читаем самостоятельно.", style="yellow")
+
+        # Картинки
+        image_path = stop.get("image_path")
         if image_path and os.path.exists(image_path):
             if get_yes_no_input("Хотите посмотреть картинку? (да/нет): "):
                 try:
@@ -146,29 +161,35 @@ def choose_city(city):
                     img.show()
                     console.print("Картинка открыта!", style="green")
                 except Exception as e:
-                    console.print(f"[dim]Не удалось открыть картинку: {e}[/dim]", style="red")
+                    console.print(f"[bold red]Ошибка открытия картинки на остановке {number}: {type(e).__name__}: {e}[/]", style="red")
             else:
                 console.print("Окей, переходим дальше.", style="yellow")
         else:
-            console.print("[dim]Фото отсутствует или файл не найден[/dim]", style="dim")
-        
+            if image_path:
+                console.print(f"[dim]Картинка не найдена: {image_path}[/dim]", style="dim")
+            else:
+                console.print("[dim]Фото для этой остановки не предусмотрено[/dim]", style="dim")
+
+        # Ждём Enter БЕЗ очистки экрана
         if number < len(stops):
-            input("\nНажмите Enter для перехода к следующей остановке...",)
-            
-        
+            input("\nНажмите Enter для перехода к следующей остановке...")
+        else:
+            input("\nЭкскурсия завершена! Нажмите Enter, чтобы перейти к викторине...")
+
+# ОЧИСТКА ЭКРАНА ТОЛЬКО ОДИН РАЗ — перед викториной
+    clear_screen()
+    time.sleep(0.5)
     for number, stop in enumerate(stops, 1):
         console.print("ВИКТОРИНА", style='bold blue')
         if 'quiz' in stop:
             console.print(f"{stop['quiz']['question']}.", style="italic")
             answer = input("Ваш ответ: ").strip().lower()
-        if answer == stop['quiz']['answer']:
-            console.print("✔️ Правильно! +10 очков!", style="bold green")
-            update_achievements(10)
-        else:
-            console.print(f"❌ Неверно. Это {stop['quiz']['answer']}.", style="bold red")
+            if answer == stop['quiz']['answer']:
+                console.print("✔️ Правильно! +10 очков!", style="bold green")
+                update_achievements(10)
+            else:
+                console.print(f"❌ Неверно. Это {stop['quiz']['answer']}.", style="bold red")
         
-    console.print("--------------------------------------------------------------------------------\n\n\n\n Тур завершён! Вы получили бонус: +50 очков достижений!", style="bold green")
-
     if not is_already_visited:
         cities_passed += 1
         visited_cities.append(city_name)
@@ -185,6 +206,7 @@ def choose_city(city):
 
     input("\nНажмите Enter, чтобы вернуться в меню...")
     menu()
+
 
 def update_achievements(points):
     global point_global
